@@ -1,0 +1,284 @@
+/* ─── Cyber Guard Palette — matching the GitHub landing page ─── */
+:root,
+[data-md-color-scheme="default"] {
+  /* Core palette */
+  --md-primary-fg-color:        #003B5C; /* Circuit Board Blue */
+  --md-primary-fg-color--light: #004e7c;
+  --md-primary-fg-color--dark:  #002843;
+  --md-primary-bg-color:        #ECF0F1; /* Algorithm Silver */
+  --md-primary-bg-color--light: #FFFFFF;
+
+  --md-accent-fg-color:         #E67E22; /* Oxide Orange */
+  --md-accent-fg-color--transparent: rgba(230, 126, 34, 0.12);
+  --md-accent-bg-color:         #E67E22;
+  --md-accent-bg-color--light:  #f0944d;
+
+  /* Page surface */
+  --md-default-bg-color:        #ECF0F1; /* Algorithm Silver */
+  --md-default-fg-color:        #1a2b38;
+  --md-default-fg-color--light: #4a6070;
+  --md-default-fg-color--lighter: #7a95a5;
+  --md-default-fg-color--lightest: rgba(26, 43, 56, 0.12);
+
+  /* Code */
+  --md-code-bg-color:           #2C3E50; /* Graphite Gray */
+  --md-code-fg-color:           #ECF0F1; /* Algorithm Silver */
+  --md-code-hl-color:           rgba(230, 126, 34, 0.15);
+
+  /* Typeset */
+  --md-typeset-color:           #1a2b38;
+  --md-typeset-a-color:         #E67E22; /* Oxide Orange for links */
+
+  /* Footer */
+  --md-footer-bg-color:         #003B5C;
+  --md-footer-bg-color--dark:   #002843;
+  --md-footer-fg-color:         #ECF0F1;
+  --md-footer-fg-color--light:  rgba(236, 240, 241, 0.7);
+  --md-footer-fg-color--lighter: rgba(236, 240, 241, 0.5);
+
+  /* Admonitions */
+  --md-admonition-bg-color:     #FFFFFF;
+
+  /* Shadow */
+  --md-shadow-z1: 0 2px 8px rgba(0, 59, 92, 0.08);
+  --md-shadow-z2: 0 6px 24px rgba(0, 59, 92, 0.12);
+  --md-shadow-z3: 0 10px 40px rgba(0, 59, 92, 0.16);
+}
+
+/* ─── Dark mode — Slate scheme ─── */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #004e7c;
+  --md-primary-fg-color--light: #1a6a9a;
+  --md-primary-fg-color--dark:  #002843;
+  --md-primary-bg-color:        #ECF0F1;
+
+  --md-accent-fg-color:         #f0944d;
+  --md-accent-bg-color:         #E67E22;
+
+  --md-default-bg-color:        #1a2b38;
+  --md-default-fg-color:        #d5dde0;
+  --md-default-fg-color--light: #7a95a5;
+  --md-default-fg-color--lighter: #4a6070;
+
+  --md-code-bg-color:           #0d1b24;
+  --md-code-fg-color:           #ECF0F1;
+
+  --md-typeset-a-color:         #f0944d;
+
+  --md-footer-bg-color:         #0d1b24;
+  --md-footer-bg-color--dark:   #060f15;
+}
+
+/* ─── Header: orange accent border ─── */
+.md-header {
+  border-bottom: 2px solid var(--md-accent-fg-color);
+  box-shadow: 0 2px 10px rgba(0, 59, 92, 0.18);
+}
+
+/* ─── Header tabs (if using tabs) ─── */
+.md-tabs {
+  background-color: var(--md-primary-fg-color--dark);
+  border-bottom: 1px solid rgba(230, 126, 34, 0.3);
+}
+
+/* ─── Navigation (sidebar) ─── */
+.md-nav__link--active,
+.md-nav__link:is(:focus, :hover) {
+  color: var(--md-accent-fg-color);
+}
+
+.md-nav--primary .md-nav__title {
+  color: var(--md-primary-fg-color);
+  font-weight: 700;
+}
+
+/* ─── Content area ─── */
+.md-main__inner {
+  margin-top: 0;
+}
+
+.md-content {
+  background: var(--md-default-bg-color);
+}
+
+/* ─── Headings: Circuit Board Blue + JetBrains Mono ─── */
+.md-typeset h1 {
+  color: var(--md-primary-fg-color);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.md-typeset h2 {
+  color: var(--md-primary-fg-color);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding-bottom: 0.4em;
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(to right, var(--md-accent-fg-color) 40px, transparent 40px) 1;
+}
+
+.md-typeset h3,
+.md-typeset h4 {
+  color: var(--md-primary-fg-color);
+  font-weight: 600;
+}
+
+/* ─── Links: Oxide Orange ─── */
+.md-typeset a {
+  color: var(--md-accent-fg-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.md-typeset a:hover {
+  border-bottom-color: var(--md-accent-fg-color);
+}
+
+/* Nav and footer links stay default */
+.md-nav a,
+.md-footer a {
+  border-bottom: none;
+}
+
+/* ─── Inline code: orange on silver, matching landing page ─── */
+.md-typeset :not(pre) > code {
+  background: #d5dde0;
+  color: var(--md-accent-fg-color);
+  border: 1px solid rgba(213, 221, 224, 0.8);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.82em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset :not(pre) > code {
+  background: rgba(0, 59, 92, 0.3);
+  border-color: rgba(236, 240, 241, 0.1);
+}
+
+/* ─── Code blocks: Graphite Gray background ─── */
+.md-typeset pre {
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.md-typeset pre > code {
+  font-size: 0.82em;
+  line-height: 1.75;
+}
+
+/* ─── Tables: white cards on silver ─── */
+.md-typeset table:not([class]) {
+  background: #FFFFFF;
+  border: 1px solid #d5dde0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 59, 92, 0.06);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  background: rgba(0, 59, 92, 0.15);
+  border-color: rgba(236, 240, 241, 0.08);
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  font-weight: 600;
+  font-size: 0.85em;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid var(--md-accent-fg-color);
+}
+
+.md-typeset table:not([class]) td {
+  border-color: #ECF0F1;
+  font-size: 0.88em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) td {
+  border-color: rgba(236, 240, 241, 0.06);
+}
+
+.md-typeset table:not([class]) tr:hover td {
+  background: rgba(230, 126, 34, 0.04);
+}
+
+/* ─── Admonitions: orange accent ─── */
+.md-typeset .admonition,
+.md-typeset details {
+  background: #FFFFFF;
+  border: 1px solid #d5dde0;
+  border-left: 4px solid var(--md-accent-fg-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 59, 92, 0.06);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition,
+[data-md-color-scheme="slate"] .md-typeset details {
+  background: rgba(0, 59, 92, 0.15);
+  border-color: rgba(236, 240, 241, 0.08);
+  border-left-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  background: rgba(230, 126, 34, 0.08);
+  border-bottom: 1px solid rgba(230, 126, 34, 0.12);
+  font-weight: 600;
+}
+
+/* ─── Content tabs: orange underline ─── */
+.md-typeset .tabbed-labels > label:is(:active, :hover),
+.md-typeset .tabbed-labels > label.tabbed-label--active {
+  color: var(--md-accent-fg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+/* ─── Search ─── */
+.md-search__input {
+  background-color: rgba(236, 240, 241, 0.12);
+}
+
+.md-search__input::placeholder {
+  color: rgba(236, 240, 241, 0.5);
+}
+
+/* ─── Scrollbar (webkit) ─── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #d5dde0;
+}
+::-webkit-scrollbar-thumb {
+  background: #7a95a5;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-accent-fg-color);
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: rgba(230, 126, 34, 0.25);
+  color: #1a2b38;
+}
+
+/* ─── Footer ─── */
+.md-footer {
+  border-top: 2px solid var(--md-accent-fg-color);
+}
+
+/* ─── Table of contents: right sidebar ─── */
+.md-sidebar--secondary .md-nav__link--active {
+  color: var(--md-accent-fg-color);
+  font-weight: 600;
+}
+
+/* ─── Source icon ─── */
+.md-source {
+  color: rgba(236, 240, 241, 0.75);
+}
+.md-source:hover {
+  color: var(--md-accent-fg-color);
+}

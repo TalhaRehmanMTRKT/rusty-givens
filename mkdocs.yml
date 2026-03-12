@@ -15,18 +15,27 @@ theme:
   language: en
   palette:
     - media: "(prefers-color-scheme: light)"
-      primary: "#003B5C"   # Circuit Board Blue
-      accent: "#E67E22"    # Oxide Orange
       scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      primary: "#004e7c"
-      accent: "#f0944d"
       scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
   font:
     text: Inter
     code: JetBrains Mono
   icon:
     repo: fontawesome/brands/github
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
   logo: assets/logo.png
   favicon: assets/logo.png
 
@@ -49,6 +58,9 @@ markdown_extensions:
   - tables
   - admonition
   - attr_list
+
+extra_css:
+  - stylesheets/custom.css
 
 extra_javascript:
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
