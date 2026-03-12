@@ -54,6 +54,10 @@ pub struct EstimationConfig {
     pub max_iterations: usize,
     pub tolerance: f64,
     pub formulation: SolverFormulation,
+    /// Zero-injection bus handling.  When enabled, virtual P = 0 / Q = 0
+    /// measurements are injected before estimation so that all formulations
+    /// enforce the zero-injection constraint.
+    pub zero_injection: super::zero_injection::ZeroInjectionConfig,
 }
 
 impl Default for EstimationConfig {
@@ -64,6 +68,7 @@ impl Default for EstimationConfig {
             formulation: SolverFormulation::NormalEquations {
                 factorization: Factorization::SparseCholesky,
             },
+            zero_injection: super::zero_injection::ZeroInjectionConfig::default(),
         }
     }
 }
@@ -139,6 +144,11 @@ pub struct EstimationResult {
     pub diagnostics: Vec<IterationDiagnostic>,
     /// Solver artifacts for post-estimation analysis.
     pub artifacts: Option<SolverArtifacts>,
+    /// Zero-injection buses identified before estimation.
+    pub zi_buses: Vec<super::zero_injection::ZeroInjectionBus>,
+    /// Number of virtual ZI measurement pairs injected (0 if ZI disabled
+    /// or the EqualityConstrained formulation handled them via constraints).
+    pub zi_virtual_pairs_injected: usize,
 }
 
 /// Errors that can occur during state estimation.

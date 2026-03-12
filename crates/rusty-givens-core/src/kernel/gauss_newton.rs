@@ -27,26 +27,61 @@ impl SeSolver for WlsSolver {
         measurements: &MeasurementSet,
         config: &EstimationConfig,
     ) -> Result<EstimationResult, SolverError> {
-        match &config.formulation {
+        use super::zero_injection::{
+            ZeroInjectionMethod, resolve_zi_buses, inject_virtual_zi_measurements,
+        };
+
+        let zi_cfg = &config.zero_injection;
+
+        let zi_buses = if zi_cfg.enabled {
+            resolve_zi_buses(system, measurements, zi_cfg)
+        } else {
+            Vec::new()
+        };
+
+        // For the EqualityConstrained formulation the zero-injection
+        // constraint is enforced via Lagrangian equality constraints
+        // inside solve_ec, so we skip virtual measurement injection.
+        let use_virtual = zi_cfg.enabled
+            && !zi_buses.is_empty()
+            && (zi_cfg.method == ZeroInjectionMethod::VirtualMeasurements
+                || !matches!(config.formulation, SolverFormulation::EqualityConstrained { .. }));
+
+        let (meas_with_zi, zi_pairs) = if use_virtual {
+            let mut m = measurements.clone();
+            let n = inject_virtual_zi_measurements(&zi_buses, &mut m, zi_cfg.sigma);
+            (Some(m), n)
+        } else {
+            (None, 0)
+        };
+
+        let effective_meas = meas_with_zi.as_ref().unwrap_or(measurements);
+
+        let mut result = match &config.formulation {
             SolverFormulation::NormalEquations { .. } => {
-                gauss_newton(system, model, measurements, config)
+                gauss_newton(system, model, effective_meas, config)
             }
             SolverFormulation::OrthogonalQR => {
-                super::qr_givens::solve_qr(system, model, measurements, config)
+                super::qr_givens::solve_qr(system, model, effective_meas, config)
             }
             SolverFormulation::PetersWilkinson => {
-                super::peters_wilkinson::solve_pw(system, model, measurements, config)
+                super::peters_wilkinson::solve_pw(system, model, effective_meas, config)
             }
             SolverFormulation::EqualityConstrained { .. } => {
-                super::equality_constrained::solve_ec(system, model, measurements, config)
+                super::equality_constrained::solve_ec(system, model, effective_meas, config)
             }
             SolverFormulation::FastDecoupled => {
-                super::fast_decoupled::solve_fd(system, model, measurements, config)
+                super::fast_decoupled::solve_fd(system, model, effective_meas, config)
             }
             SolverFormulation::DcEstimation => {
-                super::dc_estimation::solve_dc(system, model, measurements, config)
+                super::dc_estimation::solve_dc(system, model, effective_meas, config)
             }
-        }
+        }?;
+
+        result.zi_buses = zi_buses;
+        result.zi_virtual_pairs_injected = zi_pairs;
+
+        Ok(result)
     }
 }
 
@@ -241,6 +276,8 @@ pub fn gauss_newton(
         final_increment: final_inc,
         diagnostics,
         artifacts,
+        zi_buses: Vec::new(),
+        zi_virtual_pairs_injected: 0,
     })
 }
 

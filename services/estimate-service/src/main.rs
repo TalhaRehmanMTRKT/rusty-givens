@@ -69,6 +69,10 @@ pub(crate) struct AppState {
     pub(crate) last_se_result: Mutex<Option<EstimationResult>>,
     #[cfg(feature = "pro")]
     pub(crate) bdd_state: Mutex<BddState>,
+    #[cfg(feature = "pro")]
+    pub(crate) last_bdd_artifacts: Mutex<Option<rusty_givens_core::kernel::SolverArtifacts>>,
+    #[cfg(feature = "pro")]
+    pub(crate) last_bdd_measurements: Mutex<Option<MeasurementSet>>,
 }
 
 // ── JSON payloads (REST) ────────────────────────────────────────────
@@ -118,6 +122,15 @@ struct EstimateRequest {
     tolerance: Option<f64>,
     skip_obs_check: Option<bool>,
     obs_method: Option<String>,
+    /// Enable zero-injection bus handling (default: true).
+    zi_enabled: Option<bool>,
+    /// Standard deviation for virtual zero-injection measurements (default: 1e-6).
+    zi_sigma: Option<f64>,
+    /// Threshold (p.u.) for zero-injection violation reporting (default: 1e-3).
+    zi_violation_threshold: Option<f64>,
+    /// Explicit list of bus labels to treat as zero-injection, bypassing
+    /// automatic detection.  When omitted, buses are auto-detected.
+    zi_buses: Option<Vec<usize>>,
 }
 
 #[derive(Serialize, Clone)]
@@ -258,6 +271,8 @@ pub(crate) struct SeResultPayload {
     pub obs_check: Option<ObsResultPayload>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub global_status: Option<GlobalStatusPayload>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub zero_injection: Option<ZeroInjectionReportPayload>,
 }
 
 // ── Global status + dependent results payloads ──────────────────────
@@ -335,6 +350,36 @@ pub(crate) struct GlobalStatusPayload {
     pub branch_flows: Vec<BranchFlowPayload>,
     pub bus_injections: Vec<BusInjectionPayload>,
     pub power_balance: PowerBalancePayload,
+}
+
+// ── Zero-injection report payloads ───────────────────────────────────
+
+#[derive(Serialize, Clone)]
+pub(crate) struct ZiViolationPayload {
+    pub bus_index: usize,
+    pub bus_label: usize,
+    pub p_estimated_pu: f64,
+    pub q_estimated_pu: f64,
+    pub p_exceeds: bool,
+    pub q_exceeds: bool,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct ZiBusInjectionPayload {
+    pub bus_index: usize,
+    pub bus_label: usize,
+    pub p_estimated_pu: f64,
+    pub q_estimated_pu: f64,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct ZeroInjectionReportPayload {
+    pub n_zi_buses: usize,
+    pub zi_virtual_pairs_injected: usize,
+    pub threshold_pu: f64,
+    pub all_clean: bool,
+    pub violations: Vec<ZiViolationPayload>,
+    pub zi_bus_injections: Vec<ZiBusInjectionPayload>,
 }
 
 #[derive(Serialize, Clone)]
@@ -430,6 +475,8 @@ pub(crate) struct RedundancyRequest {
     pub w_ii_critical_threshold: Option<f64>,
     pub detection_sensitivity_min: Option<f64>,
     pub lambda_k: Option<f64>,
+    /// `"estimate"` (default) uses last SE result; `"bdd"` uses post-BDD artifacts.
+    pub source: Option<String>,
 }
 
 #[cfg(feature = "pro")]
@@ -437,6 +484,7 @@ pub(crate) struct RedundancyRequest {
 pub(crate) struct MeasRedundancyPayload {
     pub index: usize,
     pub measurement_type: String,
+    pub meas_type: String,
     pub measurement_label: String,
     pub sub_system: String,
     pub w_ii: f64,
@@ -447,6 +495,7 @@ pub(crate) struct MeasRedundancyPayload {
     pub detection_reliable: bool,
     pub coupling_indicator: f64,
     pub associated_buses: Vec<usize>,
+    pub associated_branches: Vec<usize>,
 }
 
 #[cfg(feature = "pro")]
@@ -472,17 +521,60 @@ pub(crate) struct LocalRedundancyPayload {
     pub n_connected_measurements: usize,
     pub min_w_ii: f64,
     pub n_critical: usize,
+    pub n_no_redundancy: usize,
     pub n_simply_redundant: usize,
     pub n_multiply_redundant: usize,
 }
 
 #[cfg(feature = "pro")]
 #[derive(Serialize, Clone)]
+pub(crate) struct LocalBranchRedundancyPayload {
+    pub branch_index: usize,
+    pub from_bus: usize,
+    pub to_bus: usize,
+    pub n_connected_measurements: usize,
+    pub min_w_ii: f64,
+    pub n_critical: usize,
+    pub n_no_redundancy: usize,
+    pub n_simply_redundant: usize,
+    pub n_multiply_redundant: usize,
+}
+
+#[cfg(feature = "pro")]
+#[derive(Serialize, Clone)]
+pub(crate) struct TypeRedundancyMarksPayload {
+    pub meas_type: String,
+    pub critical: usize,
+    pub no_redundancy: usize,
+    pub single_redundant: usize,
+    pub multiple_redundant: usize,
+}
+
+#[cfg(feature = "pro")]
+#[derive(Serialize, Clone)]
+pub(crate) struct ElementRedundancyMarksPayload {
+    pub element_index: usize,
+    pub bad_critical: usize,
+    pub bad_no_redundancy: usize,
+    pub bad_single_redundant: usize,
+    pub good_multiple_redundant: usize,
+    pub total_bad_marks: usize,
+    pub total_good_marks: usize,
+    pub by_type: Vec<TypeRedundancyMarksPayload>,
+}
+
+#[cfg(feature = "pro")]
+#[derive(Serialize, Clone)]
 pub(crate) struct RedundancyResultPayload {
+    pub source: String,
     pub global: GlobalRedundancyPayload,
     pub measurements: Vec<MeasRedundancyPayload>,
     pub local: Vec<LocalRedundancyPayload>,
+    pub local_branches: Vec<LocalBranchRedundancyPayload>,
+    pub bus_marks: Vec<ElementRedundancyMarksPayload>,
+    pub branch_marks: Vec<ElementRedundancyMarksPayload>,
     pub n_critical: usize,
+    pub n_no_redundancy: usize,
     pub n_simply_redundant: usize,
     pub n_multiply_redundant: usize,
     pub analysis_time_s: f64,
@@ -501,6 +593,7 @@ pub(crate) fn execute_estimation(
     formulation_name: &str,
     tolerance: f64,
     max_iterations: usize,
+    zi_config: rusty_givens_core::kernel::ZeroInjectionConfig,
 ) -> Result<SeExecution, String> {
     use rusty_givens_core::kernel::WlsSolver;
     use rusty_givens_core::kernel::SeSolver;
@@ -509,6 +602,7 @@ pub(crate) fn execute_estimation(
         max_iterations,
         tolerance,
         formulation,
+        zero_injection: zi_config,
     };
 
     let solver = WlsSolver;
@@ -558,11 +652,43 @@ pub(crate) fn execute_estimation(
         .collect();
 
     // ── Dependent results (post-estimation evaluation) ──────────────
-    let global_status = if result.converged {
+    let (global_status, zi_report) = if result.converged {
         let post_est = evaluate_post_estimation(
             &state.system, &state.model,
             &result.voltage_magnitude, &result.voltage_angle,
         );
+
+        // Zero-injection violation check (R3)
+        let zi = if !result.zi_buses.is_empty() {
+            use rusty_givens_core::kernel::check_zi_violations;
+            let report = check_zi_violations(
+                &result.zi_buses,
+                &post_est.buses,
+                config.zero_injection.violation_threshold_pu,
+            );
+            Some(ZeroInjectionReportPayload {
+                n_zi_buses: report.n_zi_buses,
+                zi_virtual_pairs_injected: result.zi_virtual_pairs_injected,
+                threshold_pu: report.threshold_pu,
+                all_clean: report.all_clean,
+                violations: report.violations.iter().map(|v| ZiViolationPayload {
+                    bus_index: v.bus_index,
+                    bus_label: v.bus_label,
+                    p_estimated_pu: v.p_estimated_pu,
+                    q_estimated_pu: v.q_estimated_pu,
+                    p_exceeds: v.p_exceeds,
+                    q_exceeds: v.q_exceeds,
+                }).collect(),
+                zi_bus_injections: report.zi_bus_injections.iter().map(|z| ZiBusInjectionPayload {
+                    bus_index: z.bus_index,
+                    bus_label: z.bus_label,
+                    p_estimated_pu: z.p_estimated_pu,
+                    q_estimated_pu: z.q_estimated_pu,
+                }).collect(),
+            })
+        } else {
+            None
+        };
 
         let bus_vn_kv: Vec<f64> = state.bus_metadata.iter().map(|b| b.vn_kv).collect();
         let gs = build_global_status(
@@ -570,9 +696,9 @@ pub(crate) fn execute_estimation(
             se_time, formulation_name, max_iterations, tolerance,
             &bus_vn_kv, Some(post_est),
         );
-        Some(global_status_to_payload(&gs))
+        (Some(global_status_to_payload(&gs)), zi)
     } else {
-        None
+        (None, None)
     };
 
     let payload = SeResultPayload {
@@ -591,6 +717,7 @@ pub(crate) fn execute_estimation(
         bdd,
         obs_check: None,
         global_status,
+        zero_injection: zi_report,
     };
 
     Ok(SeExecution {
@@ -891,8 +1018,25 @@ async fn run_estimate(
     #[cfg(not(feature = "pro"))]
     let obs_payload: Option<ObsResultPayload> = None;
 
+    // ── Zero-injection config ──────────────────────────────────────
+    let zi_config = {
+        use rusty_givens_core::kernel::ZeroInjectionConfig;
+        let mut cfg = ZeroInjectionConfig::default();
+        if let Some(enabled) = req.zi_enabled {
+            cfg.enabled = enabled;
+        }
+        if let Some(sigma) = req.zi_sigma {
+            cfg.sigma = sigma;
+        }
+        if let Some(thr) = req.zi_violation_threshold {
+            cfg.violation_threshold_pu = thr;
+        }
+        cfg.explicit_buses = req.zi_buses;
+        cfg
+    };
+
     // ── Run SE ──────────────────────────────────────────────────────
-    let mut exec = execute_estimation(&state, formulation, &formulation_name, tolerance, max_iterations)
+    let mut exec = execute_estimation(&state, formulation, &formulation_name, tolerance, max_iterations, zi_config)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
     exec.payload.obs_check = obs_payload;
 
@@ -1042,6 +1186,10 @@ async fn main() {
         last_se_result: Mutex::new(None),
         #[cfg(feature = "pro")]
         bdd_state: Mutex::new(BddState::new()),
+        #[cfg(feature = "pro")]
+        last_bdd_artifacts: Mutex::new(None),
+        #[cfg(feature = "pro")]
+        last_bdd_measurements: Mutex::new(None),
     });
 
     // REST server (JSON over HTTP/1.1)

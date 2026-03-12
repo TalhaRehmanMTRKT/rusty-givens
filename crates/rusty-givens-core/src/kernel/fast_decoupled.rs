@@ -214,6 +214,8 @@ pub fn solve_fd(
         final_increment: final_inc,
         diagnostics,
         artifacts,
+        zi_buses: Vec::new(),
+        zi_virtual_pairs_injected: 0,
     })
 }
 

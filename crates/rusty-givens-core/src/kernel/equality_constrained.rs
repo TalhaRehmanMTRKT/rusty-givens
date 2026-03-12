@@ -16,12 +16,11 @@
 
 use std::time::Instant;
 
-use crate::model::measurement::*;
-use crate::model::network::BusType;
 use crate::model::{AcModel, MeasurementSet, PowerSystem};
 use super::gauss_newton::build_measurement_map;
 use super::jacobian;
 use super::types::*;
+use super::zero_injection;
 
 pub fn solve_ec(
     system: &PowerSystem,
@@ -47,7 +46,8 @@ pub fn solve_ec(
         _ => (None, Factorization::SparseCholesky),
     };
 
-    let zero_inj_buses = find_zero_injection_buses(system, measurements);
+    let zi_buses = zero_injection::resolve_zi_buses(system, measurements, &config.zero_injection);
+    let zero_inj_buses: Vec<usize> = zi_buses.iter().map(|z| z.bus_index).collect();
     let n_c = zero_inj_buses.len() * 2;
 
     let mut v_mag: Vec<f64> = system.buses.iter().map(|b| b.voltage_magnitude).collect();
@@ -182,35 +182,9 @@ pub fn solve_ec(
         final_increment: final_inc,
         diagnostics,
         artifacts,
+        zi_buses: Vec::new(),
+        zi_virtual_pairs_injected: 0,
     })
-}
-
-/// Identify buses with zero injection (no load, no generation, no measurement
-/// attached as injection). These become c(x) = 0 constraints.
-fn find_zero_injection_buses(system: &PowerSystem, measurements: &MeasurementSet) -> Vec<usize> {
-    let mut injected = vec![false; system.n_buses()];
-
-    for bus in &system.buses {
-        let idx = system.bus_idx(bus.label);
-        if bus.bus_type == BusType::Slack || bus.bus_type == BusType::PV {
-            injected[idx] = true;
-        }
-        if bus.active_demand.abs() > 1e-12 || bus.reactive_demand.abs() > 1e-12 {
-            injected[idx] = true;
-        }
-    }
-
-    for wm in measurements.wattmeters.iter().filter(|m| m.status) {
-        if let WattmeterLocation::Bus(bus) = &wm.location {
-            if wm.active.abs() > 1e-12 {
-                injected[system.bus_idx(*bus)] = true;
-            }
-        }
-    }
-
-    (0..system.n_buses())
-        .filter(|&i| !injected[i])
-        .collect()
 }
 
 /// Evaluate the constraint functions c(x) = [P_i(x), Q_i(x)] for each

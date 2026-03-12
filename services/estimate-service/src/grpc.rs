@@ -100,12 +100,14 @@ impl EstimateService for EstimateServiceImpl {
         let formulation = SolverFormulation::NormalEquations { factorization };
         let form_name = format!("NormalEquations/{fact_name}");
 
+        let zi_config = rusty_givens_core::kernel::ZeroInjectionConfig::default();
         let exec = execute_estimation(
             &self.state,
             formulation,
             &form_name,
             tolerance,
             max_iterations as usize,
+            zi_config,
         )
         .map_err(|e| Status::internal(e))?;
 
@@ -349,7 +351,7 @@ impl RedService for RedServiceImpl {
         )
         .map_err(|e| Status::internal(e.to_string()))?;
 
-        let payload = crate::pro::red_result_to_payload(&result);
+        let payload = crate::pro::red_result_to_payload(&result, "estimate");
 
         Ok(Response::new(pb::RunRedResponse {
             global: Some(pb::GlobalRedundancy {

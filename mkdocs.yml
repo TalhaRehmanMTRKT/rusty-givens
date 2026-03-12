@@ -1,5 +1,5 @@
 # MkDocs configuration for StateRustimation / Rusty Givens
-# Documentation covers FREE edition only. Pro features are not included.
+# Free edition: detailed implementation. Pro edition: capabilities overview.
 # https://www.mkdocs.org/user-guide/configuration/
 
 site_name: Rusty Givens
@@ -34,23 +34,31 @@ plugins:
   - search:
       lang: en
 
-# Documentation covers FREE edition only.
-# Pro crates (crates/pro/) and case_study/pro/ are excluded from the public repo.
-
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
   - tables
   - admonition
   - attr_list
+
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
   - Home: index.md
   - Quick Start: quickstart.md
   - Architecture: architecture.md
   - REST API: api.md
+  - Sequence Diagrams: sequence-diagram.md
   - Case Study: case-study.md
+  - Pro Edition: pro.md
   - References: references.md

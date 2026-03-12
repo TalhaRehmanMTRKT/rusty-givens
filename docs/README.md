@@ -2,11 +2,6 @@
 
 This directory contains the source for the **public documentation** hosted on [Read the Docs](https://readthedocs.org).
 
-## Scope
-
-!!! warning "Free edition only"
-    This documentation covers **only the free edition** of Rusty Givens. Pro features (observability, redundancy, Bad Data Detection) live in dedicated directories (`crates/pro/`, `case_study/pro/`) and are **not** documented here. Those paths are excluded from the public repository via `.gitignore`.
-
 ## Building locally
 
 ```bash
@@ -20,21 +15,26 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 1. Import the project at [readthedocs.org](https://readthedocs.org/dashboard/import/).
 2. Connect your Git repository (GitHub, GitLab, etc.).
-3. Ensure the **default branch** used for builds is the public/free branch (no Pro crates).
-4. Read the Docs will use `.readthedocs.yaml` and `mkdocs.yml` automatically.
-5. Update `site_url` in `mkdocs.yml` after creating the RTD project.
+3. Read the Docs will use `.readthedocs.yaml` and `mkdocs.yml` automatically.
+4. Update `site_url` in `mkdocs.yml` after creating the RTD project.
+
+## Documentation scope
+
+- **Free edition** — detailed implementation documentation covering all solver formulations, zero-injection handling, post-estimation evaluation, the REST/gRPC API, and the Angular frontend.
+- **Pro edition** — capabilities overview describing *what* the Observability, Redundancy, and Bad Data Detection modules can do, without documenting *how* they are implemented.
 
 ## File structure
 
 | File | Purpose |
 |------|---------|
-| `index.md` | Home page |
-| `quickstart.md` | Build and run instructions |
-| `architecture.md` | Module structure |
-| `api.md` | REST API reference |
-| `case-study.md` | Case study overview |
+| `index.md` | Home page — overview of both editions |
+| `quickstart.md` | Build, run, and usage instructions |
+| `architecture.md` | Module structure, solver formulations, zero-injection, post-estimation |
+| `api.md` | Complete REST API reference (free edition) |
+| `sequence-diagram.md` | Mermaid sequence diagrams for startup and estimation flow |
+| `case-study.md` | GB network case study overview |
+| `pro.md` | Pro edition capabilities (Observability, Redundancy, BDD) |
 | `references.md` | Academic references |
-| `assets/logo.png` | Logo for theme |
 
 ## How to cite
 

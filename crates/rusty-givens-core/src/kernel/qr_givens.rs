@@ -311,5 +311,7 @@ fn build_result(
         final_increment,
         diagnostics,
         artifacts,
+        zi_buses: Vec::new(),
+        zi_virtual_pairs_injected: 0,
     }
 }

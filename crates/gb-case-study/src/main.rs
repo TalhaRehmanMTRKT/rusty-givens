@@ -42,6 +42,7 @@ fn main() {
         max_iterations: 50,
         tolerance: 1e-4,
         formulation: formulation.clone(),
+        ..Default::default()
     };
 
     let solver = WlsSolver;

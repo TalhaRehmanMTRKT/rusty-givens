@@ -196,6 +196,8 @@ pub fn solve_dc(
         final_increment: 0.0,
         diagnostics,
         artifacts,
+        zi_buses: Vec::new(),
+        zi_virtual_pairs_injected: 0,
     })
 }
 
