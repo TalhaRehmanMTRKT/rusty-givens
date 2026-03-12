@@ -1,0 +1,185 @@
+==============================================================================
+  RUSTY-GIVENS-CORE — SOLVER FORMULATION COMPARISON REPORT
+  GB Network Case Study
+  Generated: 2026-03-11 13:58:09
+==============================================================================
+
+  0. BACKGROUND AND METHODOLOGY
+------------------------------------------------------------------------------
+    TRUE STATE (reference)
+    The 'true state' is the power flow solution — the voltage magnitude V and
+    angle θ at every bus for a given load/generation condition. It is obtained
+    by running AC power flow (Newton-Raphson) before state estimation. Power flow
+    is NOT part of the SE run; SE only uses measurements and the network model.
+    In this case study, measurements are synthetic: generated from the true state
+    with added noise. Because we know the true state, we can evaluate how well
+    each solver recovers it from noisy measurements.
+    In real operation, the true state is unknown; SE provides the best estimate.
+
+    VM MAE (Voltage Magnitude Mean Absolute Error)
+    Average absolute error in voltage magnitude (p.u.) between the estimated
+    state and the true state:  VM MAE = (1/n) × Σ|V_est,i − V_true,i|
+    Lower values indicate higher accuracy. ~6e-4 p.u. ≈ 0.06% error.
+
+    VA MAE (Voltage Angle Mean Absolute Error)
+    Average absolute error in voltage angle (degrees) between estimated and
+    true state:  VA MAE = (1/n) × Σ|θ_est,i − θ_true,i|
+    Lower values indicate higher accuracy. ~0.04° is very small for power flow.
+
+    FORMULATIONS (6 solver formulations in rusty-givens-core)
+    NormalEquations:  Standard WLS via gain matrix G = HᵀWH, Sparse Cholesky.
+    OrthogonalQR:    QR factorization of weighted Jacobian via Givens rotations.
+    PetersWilkinson: LU of H̃; LᵀL solve, better conditioned than G.
+    EqualityConstrained: Zero injections as explicit Lagrangian constraints.
+    FastDecoupled:   P-θ / Q-V decoupled sub-problems; excludes ammeters.
+    DcEstimation:    Linear DC model, active power only, single solve.
+
+    INTERPRETATION
+    • AC formulations (NE, QR, PW, EC) solve the same WLS problem with different
+      linear algebra — they should yield nearly identical accuracy.
+    • DC Estimation uses a linear model (flat voltages, active power only);
+      larger VM/VA MAE is expected — it trades accuracy for speed.
+    • FastDecoupled excludes branch current measurements; a dash (—) indicates
+      numerical issues or that the metric is not applicable.
+
+  1. NETWORK SIZE AND STRUCTURE
+------------------------------------------------------------------------------
+    Case:              GB Network (pandapower GBnetwork)
+    Description:       Great Britain transmission network. 2224 buses, 3207 branches, 394 gen...
+
+    Topology:
+      Buses:            2224
+      Branches:         3207
+      Slack buses:      1
+      PV buses:        377
+      PQ buses:        1846
+      Base MVA:        100.0
+      Slack bus idx:   430
+
+    Measurement set:
+      Voltmeters:       2224
+      Ammeters:        778
+      Wattmeters:      3469
+      Varmeters:       3469
+      PMUs:            222
+      Total equations: 10384
+
+==============================================================================
+  2. SOLVER RESULTS SUMMARY
+==============================================================================
+
+    Formulation              | Conv  | Iter  | SE (s)     | VM MAE       | VA MAE°   
+    ----------------------------------------------------------------------------
+    NormalEquations          | Yes   | 23    | 0.2888     | 6.29e-04     | 0.0410    
+    OrthogonalQR             | Yes   | 23    | 0.2853     | 6.29e-04     | 0.0410    
+    PetersWilkinson          | Yes   | 23    | 0.9573     | 6.29e-04     | 0.0410    
+    EqualityConstrained      | Yes   | 24    | 25.2209    | 6.29e-04     | 0.0410    
+    FastDecoupled            | Yes   | 7     | 0.0871     | —            | —         
+    DcEstimation             | Yes   | 1     | 0.3392     | 4.71e-02     | 1.6132    
+
+==============================================================================
+  3.1 NormalEquations
+==============================================================================
+    Converged:          Yes
+    Iterations:          23
+    Load time (s):       0.0140
+    Model build (s):     0.0022
+    SE solve time (s):   0.2888
+
+    State estimation accuracy (vs true power flow state):
+      VM MAE (p.u.):      6.294700e-04
+      VM Max error:       9.097066e-03
+      VM RMSE:            1.034363e-03
+      VA MAE (deg):       4.104074e-02
+      VA Max error (deg): 1.247802e+00
+      VA RMSE (deg):      9.985523e-02
+
+==============================================================================
+  3.2 OrthogonalQR
+==============================================================================
+    Converged:          Yes
+    Iterations:          23
+    Load time (s):       0.0143
+    Model build (s):     0.0023
+    SE solve time (s):   0.2853
+
+    State estimation accuracy (vs true power flow state):
+      VM MAE (p.u.):      6.294700e-04
+      VM Max error:       9.097066e-03
+      VM RMSE:            1.034363e-03
+      VA MAE (deg):       4.104074e-02
+      VA Max error (deg): 1.247802e+00
+      VA RMSE (deg):      9.985523e-02
+
+==============================================================================
+  3.3 PetersWilkinson
+==============================================================================
+    Converged:          Yes
+    Iterations:          23
+    Load time (s):       0.0140
+    Model build (s):     0.0021
+    SE solve time (s):   0.9573
+
+    State estimation accuracy (vs true power flow state):
+      VM MAE (p.u.):      6.294681e-04
+      VM Max error:       9.097066e-03
+      VM RMSE:            1.034352e-03
+      VA MAE (deg):       4.104221e-02
+      VA Max error (deg): 1.247802e+00
+      VA RMSE (deg):      9.985584e-02
+
+==============================================================================
+  3.4 EqualityConstrained
+==============================================================================
+    Converged:          Yes
+    Iterations:          24
+    Load time (s):       0.0145
+    Model build (s):     0.0017
+    SE solve time (s):   25.2209
+
+    State estimation accuracy (vs true power flow state):
+      VM MAE (p.u.):      6.294679e-04
+      VM Max error:       9.097066e-03
+      VM RMSE:            1.034352e-03
+      VA MAE (deg):       4.104224e-02
+      VA Max error (deg): 1.247802e+00
+      VA RMSE (deg):      9.985586e-02
+
+==============================================================================
+  3.5 FastDecoupled
+==============================================================================
+    Converged:          Yes
+    Iterations:          7
+    Load time (s):       0.0138
+    Model build (s):     0.0019
+    SE solve time (s):   0.0871
+
+    (Per-bus estimates contain NaN — numerical issue)
+
+==============================================================================
+  3.6 DcEstimation
+==============================================================================
+    Converged:          Yes
+    Iterations:          1
+    Load time (s):       0.0147
+    Model build (s):     0.0018
+    SE solve time (s):   0.3392
+
+    State estimation accuracy (vs true power flow state):
+      VM MAE (p.u.):      4.709395e-02
+      VM Max error:       2.021777e-01
+      VM RMSE:            5.461899e-02
+      VA MAE (deg):       1.613202e+00
+      VA Max error (deg): 5.207798e+00
+      VA RMSE (deg):      1.969835e+00
+
+==============================================================================
+  4. COMPUTATIONAL PERFORMANCE
+==============================================================================
+    Fastest:  FastDecoupled (0.0871 s)
+    Slowest:  EqualityConstrained (25.2209 s)
+    Speedup:   EqualityConstrained is 289.48x slower than FastDecoupled
+
+==============================================================================
+  END OF REPORT
+==============================================================================

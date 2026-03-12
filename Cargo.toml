@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "crates/rusty-givens-core",
+    "crates/rusty-givens-io",
+    "crates/gb-case-study",
+    "services/estimate-service",
+    # --- Pro edition crates (remove on public/free branch) ---
+    "crates/pro/rusty-givens-bdd",
+    "crates/pro/rusty-givens-obs",
+    "crates/pro/rusty-givens-red",
+]
+resolver = "2"

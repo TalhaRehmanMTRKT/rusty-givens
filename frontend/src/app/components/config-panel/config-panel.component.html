@@ -1,0 +1,54 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Configuration</mat-card-title>
+    <mat-card-subtitle>WLS Solver Formulation</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Solver Formulation</mat-label>
+      <mat-select [(ngModel)]="formulation">
+        @for (opt of formulationOptions; track opt.value) {
+          <mat-option [value]="opt.value" [matTooltip]="opt.hint" matTooltipPosition="right">
+            {{ opt.label }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (showFactorization) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Gain Factorization</mat-label>
+        <mat-select [(ngModel)]="factorization">
+          @for (opt of factorizationOptions; track opt.value) {
+            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @if (showIterationParams) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Max Iterations</mat-label>
+        <input matInput type="number" [(ngModel)]="maxIterations" min="1" max="200">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Convergence Tolerance</mat-label>
+        <input matInput type="number" [(ngModel)]="tolerance" step="0.0001">
+      </mat-form-field>
+    }
+  </mat-card-content>
+
+  <mat-card-actions>
+    <button mat-raised-button color="primary"
+            [disabled]="running"
+            (click)="onRun()">
+      {{ running ? 'Running…' : 'Run State Estimation' }}
+    </button>
+  </mat-card-actions>
+
+  @if (running) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+</mat-card>

@@ -1,0 +1,38 @@
+[package]
+name = "estimate-service"
+version = "0.1.0"
+edition = "2021"
+description = "HTTP API service wrapping the Rusty Givens SE kernel (REST + gRPC)"
+license = "Apache-2.0"
+
+[features]
+default = []
+pro = [
+    "dep:rusty-givens-bdd",
+    "dep:rusty-givens-obs",
+    "dep:rusty-givens-red",
+]
+
+[dependencies]
+rusty-givens-core = { path = "../../crates/rusty-givens-core" }
+rusty-givens-io = { path = "../../crates/rusty-givens-io" }
+
+# Pro-only dependencies — only compiled when `--features pro` is passed
+rusty-givens-bdd = { path = "../../crates/pro/rusty-givens-bdd", optional = true }
+rusty-givens-obs = { path = "../../crates/pro/rusty-givens-obs", optional = true }
+rusty-givens-red = { path = "../../crates/pro/rusty-givens-red", optional = true }
+
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+env_logger = "0.11"
+log = "0.4"
+humantime = "2"
+tonic = "0.12"
+prost = "0.13"
+
+[build-dependencies]
+tonic-build = "0.12"
+protoc-bin-vendored = "3"

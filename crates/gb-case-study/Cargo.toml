@@ -1,0 +1,10 @@
+[package]
+name = "gb-case-study"
+version = "0.1.0"
+edition = "2021"
+description = "GB network case study binary for WLS state estimation (all 6 solver formulations)"
+
+[dependencies]
+rusty-givens-core = { path = "../rusty-givens-core" }
+rusty-givens-io = { path = "../rusty-givens-io" }
+serde_json = "1.0"

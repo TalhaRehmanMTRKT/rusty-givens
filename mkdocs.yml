@@ -1,0 +1,56 @@
+# MkDocs configuration for StateRustimation / Rusty Givens
+# Documentation covers FREE edition only. Pro features are not included.
+# https://www.mkdocs.org/user-guide/configuration/
+
+site_name: Rusty Givens
+site_description: A modular AC Weighted Least-Squares State Estimator for power systems in Rust
+site_url: https://staterustimation.readthedocs.io/  # Update after RTD project creation
+repo_url: https://github.com/your-org/StateRustimation  # Update with actual repo URL
+repo_name: StateRustimation
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026
+
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      primary: "#003B5C"   # Circuit Board Blue
+      accent: "#E67E22"    # Oxide Orange
+      scheme: default
+    - media: "(prefers-color-scheme: dark)"
+      primary: "#004e7c"
+      accent: "#f0944d"
+      scheme: slate
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/logo.png
+  favicon: assets/logo.png
+
+plugins:
+  - search:
+      lang: en
+
+# Documentation covers FREE edition only.
+# Pro crates (crates/pro/) and case_study/pro/ are excluded from the public repo.
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - admonition
+  - attr_list
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Architecture: architecture.md
+  - REST API: api.md
+  - Case Study: case-study.md
+  - References: references.md

@@ -1,0 +1,56 @@
+.table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-field {
+  width: 300px;
+}
+
+.table-container {
+  max-height: 500px;
+  overflow: auto;
+  border: 1px solid var(--silver-dk);
+  border-radius: 8px;
+  background: var(--white);
+}
+
+.bus-table {
+  width: 100%;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.error-high {
+  color: var(--status-warn);
+  font-weight: 700;
+}
+
+:host ::ng-deep {
+  .mat-mdc-header-cell {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    white-space: nowrap;
+    color: var(--blue) !important;
+    background: var(--silver) !important;
+    border-bottom: 2px solid var(--blue) !important;
+  }
+
+  .mat-mdc-cell {
+    font-size: 0.82rem;
+    color: var(--text);
+    border-bottom-color: var(--silver-dk) !important;
+  }
+
+  .mat-mdc-row:hover .mat-mdc-cell {
+    background: var(--blue-light);
+  }
+}

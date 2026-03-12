@@ -1,0 +1,12 @@
+[package]
+name = "rusty-givens-core"
+version = "0.1.0"
+edition = "2021"
+description = "AC Weighted Least-Squares State Estimation kernel — pure, deterministic, zero side effects"
+license = "Apache-2.0"
+
+[dependencies]
+num-complex = "0.4"
+sprs = "0.11"
+faer = "0.24"
+thiserror = "2.0"

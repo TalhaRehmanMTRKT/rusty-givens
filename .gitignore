@@ -1,0 +1,11 @@
+/target
+.venv-docs/
+site/
+
+# ── Pro edition paths (remove these entries on the pro/* branches) ──
+# These directories contain proprietary Rusty Givens Pro code and are
+# excluded from the public (free/Apache-2.0) branch.
+crates/pro/
+services/estimate-service/src/pro.rs
+frontend/src/environments/environment.pro.ts
+case_study/pro/

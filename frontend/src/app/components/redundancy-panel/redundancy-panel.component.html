@@ -1,0 +1,305 @@
+@if (data) {
+  <!-- ── Method Overview (collapsible) ───────────────────────────── -->
+  <div class="method-banner" [class.expanded]="methodExpanded">
+    <button class="method-toggle" (click)="methodExpanded = !methodExpanded">
+      <mat-icon>{{ methodExpanded ? 'expand_less' : 'info_outline' }}</mat-icon>
+      <span>{{ methodExpanded ? 'Hide method overview' : 'How does redundancy analysis work?' }}</span>
+    </button>
+
+    @if (methodExpanded) {
+      <div class="method-body">
+        <div class="method-step">
+          <span class="step-num">1</span>
+          <div class="step-content">
+            <strong>Global check</strong> — The network has <em>n</em> buses and
+            2<em>n</em> − 1 state variables (voltage magnitudes + angles, minus one slack angle).
+            At least <em>m</em> = 2<em>n</em> − 1 independent measurements are needed.
+            The redundancy ratio <strong>η = m / (2n − 1)</strong> quantifies the surplus.
+          </div>
+        </div>
+        <div class="method-step">
+          <span class="step-num">2</span>
+          <div class="step-content">
+            <strong>Detection sensitivity w<sub>ii</sub></strong> — For each measurement <em>i</em>,
+            the residual covariance <strong>Ω = R − H G⁻¹ Hᵀ</strong> is computed.
+            The diagonal <strong>w<sub>ii</sub> = Ω<sub>ii</sub> / σ²<sub>i</sub></strong> ∈ [0, 1]
+            indicates how much of the measurement error propagates into the residual.
+            <strong>w<sub>ii</sub> ≈ 0</strong> means the measurement is critical.
+          </div>
+        </div>
+        <div class="method-step">
+          <span class="step-num">3</span>
+          <div class="step-content">
+            <strong>Correlation coefficient k<sub>ik</sub></strong> — For neighboring measurements
+            (sharing Jacobian columns) in the same sub-system,
+            <strong>k<sub>ik</sub> = Ω<sub>ik</sub> / √(Ω<sub>ii</sub> · Ω<sub>kk</sub>)</strong>
+            measures how strongly they share information. A dominant partner
+            (|k<sub>ik</sub>| ≥ 1/√2) limits error identification.
+          </div>
+        </div>
+        <div class="method-step">
+          <span class="step-num">4</span>
+          <div class="step-content">
+            <strong>Classification</strong> — Each measurement is classified into one of four levels
+            based on thresholds <strong>ε = 10⁻⁶</strong>,
+            <strong>λ<sub>K</sub> = 1/√2 ≈ 0.707</strong>, and
+            <strong>w<sub>ii,min</sub> = 0.3</strong>.
+            The result determines whether bad data can be detected and identified.
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Global Metrics Bar ──────────────────────────────────────── -->
+  <div class="global-bar">
+    <div class="metric" [matTooltip]="TIP_ETA">
+      <span class="metric-value">{{ data.global.redundancy_ratio | number:'1.2-2' }}</span>
+      <span class="metric-label">η = m/(2n−1)</span>
+    </div>
+    <div class="metric" [matTooltip]="TIP_DOF">
+      <span class="metric-value">{{ data.global.degrees_of_freedom }}</span>
+      <span class="metric-label">f = m − (2n−1)</span>
+    </div>
+    <div class="metric" [matTooltip]="TIP_MEAS">
+      <span class="metric-value">{{ data.global.n_measurements }}</span>
+      <span class="metric-label">m (measurements)</span>
+    </div>
+    <div class="metric" [matTooltip]="TIP_SV">
+      <span class="metric-value">{{ data.global.n_state_variables }}</span>
+      <span class="metric-label">2n − 1 (states)</span>
+    </div>
+    <div class="metric" [matTooltip]="TIP_SUFF">
+      <mat-icon class="sufficient-icon" [class.yes]="data.global.sufficient" [class.no]="!data.global.sufficient">
+        {{ data.global.sufficient ? 'check_circle' : 'cancel' }}
+      </mat-icon>
+      <span class="metric-label">{{ data.global.sufficient ? 'η ≥ 1.0' : 'η < 1.0' }}</span>
+    </div>
+    <span class="bar-spacer"></span>
+    <div class="type-badges">
+      <span class="type-badge" matTooltip="Voltmeters — Measure |V| at a bus (U sub-system)">V: {{ data.global.n_voltmeters }}</span>
+      <span class="type-badge" matTooltip="Wattmeters — Measure active power P injection or flow (P sub-system)">P: {{ data.global.n_wattmeters }}</span>
+      <span class="type-badge" matTooltip="Varmeters — Measure reactive power Q injection or flow (Q sub-system)">Q: {{ data.global.n_varmeters }}</span>
+      <span class="type-badge" matTooltip="Ammeters — Measure current magnitude |I| on a branch (Mixed sub-system, couples P and Q)">I: {{ data.global.n_ammeters }}</span>
+      <span class="type-badge" matTooltip="PMU pairs — Each PMU provides voltage magnitude (U sub-system) and angle (P sub-system)">PMU: {{ data.global.n_pmu_pairs }}</span>
+    </div>
+  </div>
+
+  <!-- ── Classification Cards ────────────────────────────────────── -->
+  <div class="level-cards">
+    <div class="level-card critical" [class.active]="levelFilter === 'critical'"
+         (click)="onCardClick('critical')" [matTooltip]="TIP_CARD_CRITICAL">
+      <mat-icon>error</mat-icon>
+      <div class="card-body">
+        <span class="card-count">{{ nCritical }}</span>
+        <span class="card-label">Critical</span>
+        <span class="card-desc">w<sub>ii</sub> &lt; ε — outage causes unobservability</span>
+      </div>
+    </div>
+    <div class="level-card weak" [class.active]="levelFilter === 'weak'"
+         (click)="onCardClick('weak')" [matTooltip]="TIP_CARD_WEAK">
+      <mat-icon>warning</mat-icon>
+      <div class="card-body">
+        <span class="card-count">{{ nWeak }}</span>
+        <span class="card-label">No Eff. Redundancy</span>
+        <span class="card-desc">w<sub>ii</sub> &lt; 0.3 — BDD unreliable</span>
+      </div>
+    </div>
+    <div class="level-card single" [class.active]="levelFilter === 'single'"
+         (click)="onCardClick('single')" [matTooltip]="TIP_CARD_SINGLE">
+      <mat-icon>verified</mat-icon>
+      <div class="card-body">
+        <span class="card-count">{{ nSingle }}</span>
+        <span class="card-label">Single Redundancy</span>
+        <span class="card-desc">max|k<sub>ik</sub>| ≥ λ<sub>K</sub> — detection reliable</span>
+      </div>
+    </div>
+    <div class="level-card multiple" [class.active]="levelFilter === 'multiple'"
+         (click)="onCardClick('multiple')" [matTooltip]="TIP_CARD_MULTIPLE">
+      <mat-icon>shield</mat-icon>
+      <div class="card-body">
+        <span class="card-count">{{ nMultiple }}</span>
+        <span class="card-label">Multiple Redundancy</span>
+        <span class="card-desc">max|k<sub>ik</sub>| &lt; λ<sub>K</sub> — detection + identification</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Per-Measurement Table ───────────────────────────────────── -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Measurement Classification</mat-card-title>
+      <mat-card-subtitle>
+        Showing {{ measSource.filteredData.length }} of {{ data.measurements.length }} measurements
+        · Analysis time: {{ data.analysis_time_s | number:'1.2-2' }}s
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-controls">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filter measurements</mat-label>
+          <input matInput (keyup)="filterMeas($event)" placeholder="label, type …">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="level-select">
+          <mat-label>Redundancy Level</mat-label>
+          <mat-select [(ngModel)]="levelFilter" (selectionChange)="applyLevelFilter()">
+            <mat-option value="">All</mat-option>
+            <mat-option value="critical">Critical</mat-option>
+            <mat-option value="weak">No Eff. Redundancy</mat-option>
+            <mat-option value="single">Single Redundancy</mat-option>
+            <mat-option value="multiple">Multiple Redundancy</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="table-container">
+        <table mat-table [dataSource]="measSource" matSort #measSort="matSort" class="meas-table">
+
+          <ng-container matColumnDef="index">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_ROW">Row</th>
+            <td mat-cell *matCellDef="let row">{{ row.index }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="measurement_label">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_LABEL">Label</th>
+            <td mat-cell *matCellDef="let row" class="mono">{{ row.measurement_label }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="measurement_type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_TYPE">Type</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="type-chip">{{ row.measurement_type }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="sub_system">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_SS">Sub-System</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="ss-chip" [attr.data-ss]="row.sub_system">{{ row.sub_system }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="display_level">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_LEVEL">Redundancy</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="level-badge" [attr.data-level]="row.display_level">
+                <mat-icon class="badge-icon">{{ levelIcon(row.display_level) }}</mat-icon>
+                {{ levelLabel(row.display_level) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="w_ii">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_WII">
+              w<sub>ii</sub>
+            </th>
+            <td mat-cell *matCellDef="let row" class="mono"
+                [class.val-low]="row.w_ii < 0.3"
+                [class.val-zero]="row.w_ii < 0.000001">
+              {{ row.w_ii | number:'1.4-4' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="max_abs_k_ik">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_KIK">
+              max|k<sub>ik</sub>|
+            </th>
+            <td mat-cell *matCellDef="let row" class="mono">
+              {{ row.max_abs_k_ik | number:'1.4-4' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="detection_reliable">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_COL_BDD">
+              BDD
+            </th>
+            <td mat-cell *matCellDef="let row">
+              <mat-icon class="detect-icon" [class.ok]="row.detection_reliable" [class.no]="!row.detection_reliable">
+                {{ row.detection_reliable ? 'check' : 'close' }}
+              </mat-icon>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="measColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: measColumns;"></tr>
+        </table>
+      </div>
+
+      <mat-paginator #measPaginator
+                     [pageSizeOptions]="[25, 50, 100, 250]"
+                     [pageSize]="50"
+                     showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ── Per-Bus Local Redundancy Table ──────────────────────────── -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Local Redundancy per Bus</mat-card-title>
+      <mat-card-subtitle>
+        Aggregated measurement quality at each bus — identifies weakly observed areas
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Filter buses</mat-label>
+        <input matInput (keyup)="filterBus($event)" placeholder="bus index …">
+      </mat-form-field>
+
+      <div class="table-container">
+        <table mat-table [dataSource]="busSource" matSort #busSort="matSort" class="bus-table">
+
+          <ng-container matColumnDef="bus_index">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_BUS">Bus</th>
+            <td mat-cell *matCellDef="let row">{{ row.bus_index }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="n_connected_measurements">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_BUS_CONNECTED">
+              Connected
+            </th>
+            <td mat-cell *matCellDef="let row" class="mono">{{ row.n_connected_measurements }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="min_w_ii">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_BUS_MIN_WII">
+              min w<sub>ii</sub>
+            </th>
+            <td mat-cell *matCellDef="let row" class="mono"
+                [class.val-low]="row.min_w_ii < 0.3"
+                [class.val-zero]="row.min_w_ii < 0.000001">
+              {{ row.min_w_ii | number:'1.4-4' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="n_critical">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_BUS_M0">M₀</th>
+            <td mat-cell *matCellDef="let row" [class.flag-critical]="row.n_critical > 0">
+              {{ row.n_critical }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="n_simply_redundant">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_BUS_M1">M₁</th>
+            <td mat-cell *matCellDef="let row">{{ row.n_simply_redundant }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="n_multiply_redundant">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [matTooltip]="TIP_BUS_M2">M₂</th>
+            <td mat-cell *matCellDef="let row">{{ row.n_multiply_redundant }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="busColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: busColumns;"></tr>
+        </table>
+      </div>
+
+      <mat-paginator #busPaginator
+                     [pageSizeOptions]="[25, 50, 100, 250]"
+                     [pageSize]="50"
+                     showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+}

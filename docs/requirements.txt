@@ -1,0 +1,5 @@
+# MkDocs and Material theme for Read the Docs builds
+# Pin versions for reproducible documentation builds
+mkdocs>=1.6.0,<2
+mkdocs-material>=9.5.0,<10
+pymdown-extensions>=10.0,<11

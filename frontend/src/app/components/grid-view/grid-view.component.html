@@ -1,0 +1,13 @@
+<div class="gis-view-wrapper">
+  <div #mapContainer id="leaflet-map" class="map-canvas"></div>
+  @if (!networkData) {
+    <div class="overlay">
+      <span>Loading network topology…</span>
+    </div>
+  }
+  <div class="map-info" [class.hidden]="!networkData">
+    <span class="bus-count" *ngIf="visibleBusCount > 0">
+      {{ visibleBusCount }} buses · {{ visibleBranchCount }} branches
+    </span>
+  </div>
+</div>

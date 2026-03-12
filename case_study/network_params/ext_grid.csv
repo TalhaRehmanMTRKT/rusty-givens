@@ -1,0 +1,2 @@
+ext_grid_id,name,bus,vm_pu,va_degree,slack_weight,in_service,max_p_mw,min_p_mw,max_q_mvar,min_q_mvar,vn_kv
+0,,430,1.05,0.0,1.0,True,1500.0,0.0,250.0,-250.0,400.0

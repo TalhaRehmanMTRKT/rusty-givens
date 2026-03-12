@@ -1,0 +1,78 @@
+<header class="app-toolbar">
+  <img src="logo.png" alt="Rusty Givens" class="logo">
+  <div class="brand">
+    <span class="title">Rusty Givens</span>
+    @if (isPro) {
+      <span class="edition-badge pro">PRO</span>
+    } @else {
+      <span class="edition-badge free">FREE</span>
+    }
+  </div>
+  <span class="spacer"></span>
+  @if (networkData) {
+    <span class="network-badge">
+      <mat-icon class="badge-icon">hub</mat-icon>
+      {{ networkData.n_buses }} buses &middot; {{ networkData.n_branches }} branches
+    </span>
+  }
+</header>
+
+<div class="dashboard">
+  <!-- Left: Network graph -->
+  <section class="graph-panel">
+    <app-grid-view
+      [networkData]="networkData"
+      [busResults]="seResult?.buses ?? null">
+    </app-grid-view>
+
+    <div class="legend">
+      <span class="legend-item"><span class="dot dot-400kv"></span> 400 kV</span>
+      <span class="legend-item"><span class="dot dot-275kv"></span> 275 kV</span>
+      <span class="legend-item"><span class="dot dot-slack"></span> Slack</span>
+      <span class="legend-item legend-note">GIS view — GB 275/400 kV transmission grid with geo-referenced coordinates</span>
+    </div>
+  </section>
+
+  <!-- Right: Config + Results -->
+  <section class="controls-panel">
+    <app-config-panel
+      [running]="running"
+      (runEstimate)="onRunEstimate($event)">
+    </app-config-panel>
+
+    @if (seResult) {
+      <app-summary-card [result]="seResult"></app-summary-card>
+    }
+  </section>
+</div>
+
+@if (seResult) {
+  <section class="results-section">
+    <mat-tab-group animationDuration="200ms">
+      <mat-tab label="Estimation Results ({{ seResult.buses.length }} buses)">
+        <div class="tab-content">
+          <app-results-table [busResults]="seResult.buses"></app-results-table>
+        </div>
+      </mat-tab>
+
+      @if (isPro) {
+        <mat-tab [disabled]="!redundancyResult && !loadingRedundancy">
+          <ng-template mat-tab-label>
+            @if (loadingRedundancy) {
+              Redundancy Analysis …
+            } @else if (redundancyResult) {
+              Redundancy Analysis ({{ redundancyResult.measurements.length }})
+            } @else {
+              Redundancy Analysis
+            }
+          </ng-template>
+          <div class="tab-content">
+            @if (redundancyResult) {
+              <app-redundancy-panel [data]="redundancyResult"></app-redundancy-panel>
+            }
+          </div>
+        </mat-tab>
+      }
+    </mat-tab-group>
+  </section>
+}

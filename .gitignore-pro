@@ -1,0 +1,4 @@
+/target
+
+# Pro branch — no exclusions for Pro-specific paths.
+# When merging from main → pro/main, replace .gitignore with this file.

@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rusty Givens — A Modular Power System State Estimator in Rust</title>
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ─── Cyber Guard Palette ─── */
+:root {
+  --blue:     #003B5C;   /* Circuit Board Blue */
+  --orange:   #E67E22;   /* Oxide Orange */
+  --graphite: #2C3E50;   /* Graphite Gray */
+  --silver:   #ECF0F1;   /* Algorithm Silver */
+  --white:    #FFFFFF;
+  --blue-dark:#002843;
+  --blue-mid: #004e7c;
+  --orange-lt:#f0944d;
+  --silver-dk:#d5dde0;
+  --text:     #1a2b38;
+  --text-mid: #4a6070;
+  --text-light:#7a95a5;
+}
+
+/* ─── Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--silver);
+  color: var(--text);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Nav ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--blue);
+  border-bottom: 2px solid var(--orange);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem; height: 60px;
+}
+nav .brand {
+  display: flex; align-items: center; gap: .65rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; font-size: 1rem; color: var(--silver);
+  text-decoration: none; letter-spacing: .04em; text-transform: uppercase;
+}
+nav .brand img {
+  height: 36px; width: 36px; object-fit: contain;
+}
+nav ul { list-style: none; display: flex; gap: 2rem; }
+nav a {
+  text-decoration: none; color: rgba(236,240,241,.75);
+  font-size: .85rem; font-weight: 500; letter-spacing: .02em;
+  transition: color .2s;
+}
+nav a:hover { color: var(--orange); }
+
+/* ─── Hero ─── */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 7rem 1.5rem 5rem;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 38%, rgba(0,59,92,.08) 0%, transparent 70%),
+    var(--silver);
+}
+.hero-logo-wrap {
+  position: relative; display: inline-flex;
+  align-items: center; justify-content: center;
+  margin-bottom: 2rem;
+}
+.hero-logo-wrap::before {
+  content: '';
+  position: absolute; inset: -14px;
+  border: 2px solid var(--orange);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.hero img {
+  width: 160px; height: 160px; object-fit: contain;
+}
+.hero h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700;
+  color: var(--blue); letter-spacing: .04em; text-transform: uppercase;
+}
+.hero h1 span { color: var(--orange); }
+.hero .tagline {
+  font-size: clamp(.95rem, 2vw, 1.15rem);
+  color: var(--text-mid); max-width: 560px; margin: .9rem auto 2rem;
+}
+.hero .badges { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; }
+.badge {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: var(--white); border: 1px solid var(--silver-dk);
+  border-radius: 4px; padding: .28rem .8rem; font-size: .78rem;
+  color: var(--text-mid); font-weight: 500; font-family: 'JetBrains Mono', monospace;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.badge .dot { width: 7px; height: 7px; border-radius: 50%; }
+.dot-blue   { background: var(--blue); }
+.dot-orange { background: var(--orange); }
+.dot-green  { background: #27ae60; }
+
+.hero .cta {
+  margin-top: 2rem; display: flex; gap: .8rem; flex-wrap: wrap; justify-content: center;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: .45rem;
+  padding: .7rem 1.6rem; border-radius: 6px;
+  font-size: .88rem; font-weight: 700; text-decoration: none;
+  font-family: 'JetBrains Mono', monospace; letter-spacing: .04em; text-transform: uppercase;
+  transition: all .2s;
+}
+.btn-primary {
+  background: var(--blue); color: var(--silver);
+  box-shadow: 0 2px 10px rgba(0,59,92,.22);
+}
+.btn-primary:hover { background: var(--blue-dark); transform: translateY(-2px); box-shadow: 0 5px 18px rgba(0,59,92,.3); }
+.btn-secondary {
+  background: transparent; color: var(--blue);
+  border: 2px solid var(--blue);
+}
+.btn-secondary:hover { background: var(--blue); color: var(--silver); }
+
+/* ─── Section base ─── */
+section { padding: 5rem 1.5rem; max-width: 980px; margin: 0 auto; }
+section h2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6rem; font-weight: 700; color: var(--blue);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: .35rem;
+}
+section h2::after {
+  content: '';
+  display: block; width: 40px; height: 3px;
+  background: var(--orange); margin-top: .5rem; border-radius: 2px;
+}
+section .subtitle {
+  font-size: .95rem; color: var(--text-mid); margin-top: .8rem; margin-bottom: 2.5rem;
+}
+
+/* ─── Architecture cards ─── */
+.arch-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 1.2rem;
+}
+.arch-card {
+  background: var(--white); border: 1px solid var(--silver-dk);
+  border-top: 3px solid var(--blue);
+  border-radius: 8px; padding: 1.6rem;
+  transition: box-shadow .25s, border-top-color .25s;
+}
+.arch-card:hover {
+  border-top-color: var(--orange);
+  box-shadow: 0 6px 24px rgba(0,59,92,.1);
+}
+.arch-card .icon {
+  width: 42px; height: 42px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; margin-bottom: .9rem;
+  font-weight: 700; color: var(--white);
+}
+.icon-kernel { background: var(--blue); }
+.icon-io     { background: var(--graphite); }
+.icon-svc    { background: var(--orange); }
+.arch-card h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem; font-weight: 700; color: var(--blue);
+  margin-bottom: .4rem;
+}
+.arch-card code {
+  font-family: 'JetBrains Mono', monospace; font-size: .76rem;
+  background: var(--silver); color: var(--orange);
+  padding: .12rem .45rem; border-radius: 4px;
+  border: 1px solid var(--silver-dk);
+}
+.arch-card p { font-size: .88rem; color: var(--text-mid); margin-top: .55rem; }
+
+/* ─── Features ─── */
+.feat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.feat {
+  padding: 1.3rem 1.4rem; border-radius: 8px;
+  background: var(--white); border: 1px solid var(--silver-dk);
+  border-left: 3px solid var(--orange);
+  transition: box-shadow .2s;
+}
+.feat:hover { box-shadow: 0 4px 16px rgba(230,126,34,.12); }
+.feat h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .9rem; font-weight: 700; color: var(--blue);
+  margin-bottom: .3rem;
+}
+.feat p { font-size: .84rem; color: var(--text-mid); }
+.feat code {
+  font-family: 'JetBrains Mono', monospace; font-size: .76rem;
+  background: var(--silver); color: var(--orange);
+  padding: .1rem .35rem; border-radius: 3px;
+}
+
+/* ─── Code blocks ─── */
+.code-section {
+  background: var(--graphite); border-radius: 8px;
+  padding: 1.8rem; margin-top: 2.5rem;
+  overflow-x: auto;
+  border: 1px solid rgba(0,0,0,.15);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+.code-section .label {
+  font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--orange); margin-bottom: .9rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+.code-section pre {
+  font-family: 'JetBrains Mono', monospace; font-size: .82rem;
+  color: var(--silver); line-height: 1.75; white-space: pre; margin: 0;
+}
+.code-section .kw  { color: #7fb3d3; }
+.code-section .str { color: #a8d8a0; }
+.code-section .cmt { color: #6d8a99; font-style: italic; }
+.code-section .fn  { color: var(--orange); }
+.code-section .ty  { color: #f0c36d; }
+
+/* ─── Alert / Warning bar ─── */
+.alert-bar {
+  background: var(--orange); color: var(--white);
+  border-radius: 6px; padding: .7rem 1.2rem;
+  font-size: .85rem; font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: .6rem;
+  margin-bottom: 2rem;
+}
+.alert-bar .alert-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* ─── Palette showcase ─── */
+.palette-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem; margin-top: 1.8rem;
+}
+.swatch-card {
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--silver-dk);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.swatch-color { height: 70px; }
+.swatch-info {
+  background: var(--white); padding: .55rem .7rem;
+}
+.swatch-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .74rem; font-weight: 700; color: var(--blue);
+}
+.swatch-hex {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .68rem; color: var(--text-light); margin-top: .1rem;
+}
+.swatch-role {
+  font-size: .68rem; color: var(--text-mid); margin-top: .15rem; line-height: 1.3;
+}
+
+/* ─── Divider ─── */
+.section-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(to right, transparent, var(--silver-dk), transparent);
+  max-width: 980px; margin: 0 auto;
+}
+
+/* ─── Footer ─── */
+footer {
+  background: var(--blue);
+  color: rgba(236,240,241,.7);
+  text-align: center; padding: 3rem 1.5rem;
+  font-size: .82rem;
+}
+footer .footer-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; font-size: 1rem; color: var(--silver);
+  letter-spacing: .06em; text-transform: uppercase; margin-bottom: .5rem;
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+}
+footer .footer-brand img {
+  height: 28px;
+  width: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+footer a { color: var(--orange); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+footer .footer-links {
+  margin-top: .7rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+}
+footer .footer-links a { color: rgba(236,240,241,.6); font-size: .8rem; }
+footer .footer-links a:hover { color: var(--orange); }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  nav { padding: 0 1.2rem; }
+  nav ul { gap: 1.2rem; }
+  section { padding: 3.5rem 1.2rem; }
+  .hero img { width: 120px; height: 120px; }
+  .hero-logo-wrap::before { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="brand" href="#">
+    <img src="logo.png" alt="Rusty Givens">
+    Rusty Givens
+  </a>
+  <ul>
+    <li><a href="#components">Components</a></li>
+    <li><a href="#kernel">SE Kernel</a></li>
+    <li><a href="#frontend">Frontend</a></li>
+    <li><a href="#apis">APIs</a></li>
+    <li><a href="#output">Output</a></li>
+    <li><a href="#quickstart">Quick Start</a></li>
+    <li><a href="#palette">Palette</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-logo-wrap">
+    <img src="logo.png" alt="Rusty Givens">
+  </div>
+  <h1>Rusty <span>Givens</span></h1>
+  <p class="tagline">
+    A free, open-source AC Weighted Least-Squares State Estimator for power systems.
+    Learn how SE works with the included Angular frontend and dual APIs.
+  </p>
+  <div class="badges">
+    <span class="badge"><span class="dot dot-blue"></span>Rust</span>
+    <span class="badge"><span class="dot dot-orange"></span>FOSS</span>
+    <span class="badge"><span class="dot dot-green"></span>REST + gRPC</span>
+  </div>
+  <div class="cta">
+    <a class="btn btn-primary" href="#quickstart">Get Started</a>
+    <a class="btn btn-secondary" href="https://github.com/your-org/rusty-givens" target="_blank">GitHub &rarr;</a>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FOSS Components -->
+<section id="components">
+  <h2>FOSS Components</h2>
+  <p class="subtitle">The free Rusty Givens library ships with three core pieces: the SE kernel, I/O layer, and an educational Angular frontend.</p>
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="icon icon-kernel">&#x2699;</div>
+      <h3>SE Kernel</h3>
+      <code>rusty-givens-core</code>
+      <p>
+        Pure Gauss-Newton WLS solver. Zero I/O, zero serde. Sparse Cholesky, sparse LU, or dense Cholesky via <code>faer</code>.
+        Exposes the <code>SeSolver</code> trait for pluggable backends.
+      </p>
+    </div>
+    <div class="arch-card">
+      <div class="icon icon-io">&#x21C4;</div>
+      <h3>I/O Layer</h3>
+      <code>rusty-givens-io</code>
+      <p>
+        JSON deserialization, format conversion, and <code>load_case()</code>. Loads network topology, measurements, and true state for validation.
+      </p>
+    </div>
+    <div class="arch-card">
+      <div class="icon icon-svc">&#x1F4FA;</div>
+      <h3>Angular Frontend</h3>
+      <code>frontend</code>
+      <p>
+        Educational web UI: geo-referenced GB transmission grid, configurable factorization, tabular bus results. See the SE output in action.
+      </p>
+    </div>
+  </div>
+
+  <div class="code-section">
+    <div class="label">Trait contract &mdash; rusty-givens-core</div>
+<pre><span class="kw">pub trait</span> <span class="ty">SeSolver</span> {
+    <span class="kw">fn</span> <span class="fn">estimate</span>(
+        &amp;<span class="kw">self</span>,
+        system: &amp;<span class="ty">PowerSystem</span>,
+        model:  &amp;<span class="ty">AcModel</span>,
+        measurements: &amp;<span class="ty">MeasurementSet</span>,
+        config: &amp;<span class="ty">EstimationConfig</span>,
+    ) -&gt; <span class="ty">Result</span>&lt;<span class="ty">EstimationResult</span>, <span class="ty">SolverError</span>&gt;;
+}</pre>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SE Kernel -->
+<section id="kernel">
+  <h2>SE Kernel</h2>
+  <p class="subtitle">The heart of Rusty Givens: a deterministic Gauss-Newton WLS solver with configurable linear algebra.</p>
+  <div class="feat-grid">
+    <div class="feat">
+      <h4>Sparse Cholesky (LLT)</h4>
+      <p>Default factorization via <code>faer</code>. Exploits the SPD structure of the gain matrix for O(nnz) solves.</p>
+    </div>
+    <div class="feat">
+      <h4>Sparse LU Fallback</h4>
+      <p>For non-SPD or numerically difficult gain matrices, seamlessly switch to sparse LU decomposition.</p>
+    </div>
+    <div class="feat">
+      <h4>Dense Cholesky</h4>
+      <p>Small-system path via <code>faer</code> dense routines. Robust baseline for networks under ~200 buses.</p>
+    </div>
+    <div class="feat">
+      <h4>Pluggable Backends</h4>
+      <p>The <code>SeSolver</code> trait allows swapping the Rust kernel for pandapower or any other solver.</p>
+    </div>
+    <div class="feat">
+      <h4>Structured Diagnostics</h4>
+      <p>Per-iteration timing (Jacobian, gain assembly, factorization) returned in the result — no stdout noise.</p>
+    </div>
+    <div class="feat">
+      <h4>Zero-Copy Gain Cache</h4>
+      <p>Sparsity pattern computed once, values array refilled each iteration. Avoids repeated allocation.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- Angular Frontend -->
+<section id="frontend">
+  <h2>Angular Frontend</h2>
+  <p class="subtitle">A web UI built for learning and teaching power system state estimation.</p>
+  <div class="feat-grid">
+    <div class="feat">
+      <h4>Geo-referenced Grid</h4>
+      <p>Interactive map of the GB 400/275 kV transmission network with bus positions and estimated voltage states.</p>
+    </div>
+    <div class="feat">
+      <h4>Configurable Factorization</h4>
+      <p>Choose Sparse Cholesky, Sparse LU, or Dense Cholesky via the UI and run estimation on demand.</p>
+    </div>
+    <div class="feat">
+      <h4>Tabular Results</h4>
+      <p>Per-bus estimated voltage magnitude (p.u.) and angle (deg), with optional true-state comparison for error analysis.</p>
+    </div>
+    <div class="feat">
+      <h4>Summary Metrics</h4>
+      <p>Convergence status, iteration count, solve time, and MAE/max error metrics at a glance.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- APIs -->
+<section id="apis">
+  <h2>Two APIs</h2>
+  <p class="subtitle">Rusty Givens exposes the same core functionality over REST (JSON) and gRPC (protobuf). Choose the one that fits your stack.</p>
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="icon icon-kernel">&#x1F4DC;</div>
+      <h3>REST API</h3>
+      <code>HTTP/1.1 · JSON</code>
+      <p>
+        <code>GET /api/network</code> — topology (buses, branches)<br>
+        <code>GET /api/true-state</code> — reference power-flow state<br>
+        <code>POST /api/estimate</code> — run WLS SE with config<br>
+        <code>GET /api/last-result</code> — most recent estimation
+      </p>
+    </div>
+    <div class="arch-card">
+      <div class="icon icon-io">&#x1F4E0;</div>
+      <h3>gRPC API</h3>
+      <code>HTTP/2 · Protobuf</code>
+      <p>
+        <code>EstimateService</code>: GetNetwork, GetTrueState, RunEstimate, GetLastResult. Same endpoints as REST, typed and efficient for high-throughput scenarios.
+      </p>
+    </div>
+  </div>
+  <div class="code-section">
+    <div class="label">Example: REST</div>
+<pre><span class="fn">curl</span> -X POST http://localhost:3001/api/estimate \
+  -H <span class="str">'Content-Type: application/json'</span> \
+  -d <span class="str">'{"factorization":"SparseCholesky","max_iterations":50,"tolerance":1e-4}'</span></pre>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- Output Data -->
+<section id="output">
+  <h2>SE Output Data</h2>
+  <p class="subtitle">The kernel returns structured results that enable downstream analysis and integration.</p>
+  <div class="alert-bar">
+    <span class="alert-icon">&#x1F4CA;</span>
+    Understanding what the SE kernel outputs is key. These results can drive Bad Data Detection, observability analysis, and other SCADA/EMS capabilities.
+  </div>
+  <div class="feat-grid">
+    <div class="feat">
+      <h4>Per-bus State</h4>
+      <p>Estimated voltage magnitude (p.u.) and angle (deg) for every bus. Indexed by bus label for easy mapping to the network.</p>
+    </div>
+    <div class="feat">
+      <h4>Convergence Metrics</h4>
+      <p>Converged flag, iteration count, final increment norm, and solve time in seconds.</p>
+    </div>
+    <div class="feat">
+      <h4>Error Metrics</h4>
+      <p>When true state is available: MAE and max error for V and θ for validation and benchmarking.</p>
+    </div>
+    <div class="feat">
+      <h4>Solver Configuration</h4>
+      <p>Echo of factorization, tolerance, and max iterations used.</p>
+    </div>
+  </div>
+  <div class="code-section">
+    <div class="label">Example: BusResult (per-bus output)</div>
+<pre><span class="kw">struct</span> <span class="ty">BusResult</span> {
+    index: <span class="ty">usize</span>,
+    label: <span class="ty">usize</span>,
+    est_vm: <span class="ty">f64</span>,      <span class="cmt">// estimated voltage magnitude (p.u.)</span>
+    est_va_deg: <span class="ty">f64</span>,  <span class="cmt">// estimated voltage angle (deg)</span>
+    true_vm: <span class="ty">f64</span>,      <span class="cmt">// true state (if available)</span>
+    true_va_deg: <span class="ty">f64</span>,
+    vm_error: <span class="ty">f64</span>,     <span class="cmt">// |est - true|</span>
+    va_error_deg: <span class="ty">f64</span>,
+}</pre>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- Quick Start -->
+<section id="quickstart">
+  <h2>Quick Start</h2>
+  <p class="subtitle">Build the workspace, run the estimate service, and launch the Angular frontend.</p>
+  <div class="code-section">
+    <div class="label">Terminal</div>
+<pre><span class="cmt"># Build the workspace (release mode)</span>
+<span class="fn">cargo</span> build --release
+
+<span class="cmt"># Run the estimate service (loads the GB network, REST on 3001, gRPC on 50051)</span>
+<span class="fn">cargo</span> run --release -p estimate-service
+
+<span class="cmt"># In another terminal — run the Angular frontend</span>
+<span class="fn">cd</span> frontend && npm install && npx ng serve
+
+<span class="cmt"># Run an estimation via REST</span>
+<span class="fn">curl</span> -X POST http://localhost:3001/api/estimate \
+  -H <span class="str">'Content-Type: application/json'</span> \
+  -d <span class="str">'{"factorization":"SparseCholesky","max_iterations":50,"tolerance":1e-4}'</span></pre>
+  </div>
+
+  <div class="code-section" style="margin-top: 1.2rem;">
+    <div class="label">Using the kernel as a library</div>
+<pre><span class="cmt">// Cargo.toml</span>
+[dependencies]
+rusty-givens-core = { path = <span class="str">"crates/rusty-givens-core"</span> }
+rusty-givens-io   = { path = <span class="str">"crates/rusty-givens-io"</span> }
+
+<span class="cmt">// main.rs</span>
+<span class="kw">use</span> rusty_givens_core::kernel::{<span class="ty">WlsSolver</span>, <span class="ty">SeSolver</span>, <span class="ty">EstimationConfig</span>, <span class="ty">Factorization</span>};
+<span class="kw">use</span> rusty_givens_core::model::<span class="fn">build_ac_model</span>;
+<span class="kw">use</span> rusty_givens_io::<span class="fn">load_case</span>;
+
+<span class="kw">fn</span> <span class="fn">main</span>() {
+    <span class="kw">let</span> case  = <span class="fn">load_case</span>(Path::new(<span class="str">"case_study/gb_network.json"</span>)).unwrap();
+    <span class="kw">let</span> model = <span class="fn">build_ac_model</span>(&amp;case.system);
+    <span class="kw">let</span> cfg   = <span class="ty">EstimationConfig</span> {
+        factorization: <span class="ty">Factorization</span>::SparseCholesky,
+        ..<span class="ty">EstimationConfig</span>::default()
+    };
+    <span class="kw">let</span> result = <span class="ty">WlsSolver</span>.<span class="fn">estimate</span>(&amp;case.system, &amp;model, &amp;case.measurements, &amp;cfg)
+        .expect(<span class="str">"estimation failed"</span>);
+
+    println!(<span class="str">"Converged in {} iterations"</span>, result.iterations);
+    println!(<span class="str">"Voltage magnitudes: {:?}"</span>, result.voltage_magnitude);
+}</pre>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- Palette -->
+<section id="palette">
+  <h2>Colour Palette</h2>
+  <p class="subtitle">The Cyber Guard palette — technical, modern, and serious. Use these tokens across all brand surfaces.</p>
+  <div class="palette-grid">
+    <div class="swatch-card">
+      <div class="swatch-color" style="background:#003B5C;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Circuit Board Blue</div>
+        <div class="swatch-hex">#003B5C</div>
+        <div class="swatch-role">Logo, Headings, Nav, Buttons</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-color" style="background:#E67E22;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Oxide Orange</div>
+        <div class="swatch-hex">#E67E22</div>
+        <div class="swatch-role">CTAs, Code, Alerts, Accents</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-color" style="background:#2C3E50;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Graphite Gray</div>
+        <div class="swatch-hex">#2C3E50</div>
+        <div class="swatch-role">Code Blocks, Borders, Containers</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-color" style="background:#ECF0F1; border-bottom: 1px solid #d5dde0;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Algorithm Silver</div>
+        <div class="swatch-hex">#ECF0F1</div>
+        <div class="swatch-role">Page Background, Light Accents</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-brand">
+    <img src="logo.png" alt="Rusty Givens">
+    Rusty Givens
+  </div>
+  <p>A Modular Power System State Estimator in Rust &mdash; &copy; 2026</p>
+  <div class="footer-links">
+    <a href="#components">Components</a>
+    <a href="#kernel">SE Kernel</a>
+    <a href="#frontend">Frontend</a>
+    <a href="#apis">APIs</a>
+    <a href="#output">Output</a>
+    <a href="#quickstart">Quick Start</a>
+    <a href="#palette">Palette</a>
+    <a href="https://github.com/your-org/rusty-givens" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>

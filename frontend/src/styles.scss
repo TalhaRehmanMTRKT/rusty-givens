@@ -1,0 +1,89 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+/* ── Cyber Guard theme: Circuit Board Blue primary, Oxide Orange accent ── */
+$sentinel-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$orange-palette,
+  ),
+  density: (
+    scale: 0,
+  )
+));
+
+:root {
+  @include mat.all-component-themes($sentinel-theme);
+
+  /* ── Core Palette ── */
+  --blue:        #003B5C;
+  --blue-dark:   #002843;
+  --blue-mid:    #004e7c;
+  --blue-light:  #d0e8f5;
+  --orange:      #E67E22;
+  --orange-lt:   #f0944d;
+  --orange-dk:   #c96a10;
+  --graphite:    #2C3E50;
+  --graphite-lt: #3d5166;
+  --silver:      #ECF0F1;
+  --silver-dk:   #d5dde0;
+  --silver-dkr:  #b8c4c9;
+  --white:       #FFFFFF;
+  --text:        #1a2b38;
+  --text-mid:    #4a6070;
+  --text-light:  #7a95a5;
+
+  /* ── Semantic Status Colors ── */
+  --status-critical:        #c0392b;
+  --status-critical-bg:     #fcedea;
+  --status-critical-border: #c0392b;
+
+  --status-warn:            #d35400;
+  --status-warn-bg:         #fef5ec;
+  --status-warn-border:     #e67e22;
+
+  --status-info:            #2471a3;
+  --status-info-bg:         #eaf4fb;
+  --status-info-border:     #2471a3;
+
+  --status-ok:              #1e8449;
+  --status-ok-bg:           #eafaf1;
+  --status-ok-border:       #1e8449;
+
+  /* ── Sub-system Chips ── */
+  --ss-u:       #2471a3;
+  --ss-u-bg:    #d6eaf8;
+  --ss-p:       #b7950b;
+  --ss-p-bg:    #fef9e7;
+  --ss-q:       #6c3483;
+  --ss-q-bg:    #f4ecf7;
+  --ss-mixed:   #af601a;
+  --ss-mixed-bg:#fbeee6;
+
+  /* Force Material component colors to Cyber Guard */
+  --mdc-filled-button-container-color: var(--blue);
+  --mdc-filled-button-label-text-color: var(--silver);
+  --mdc-raised-button-container-color: var(--blue);
+  --mdc-raised-button-label-text-color: var(--silver);
+  --mat-tab-header-active-label-text-color: var(--orange);
+  --mat-tab-header-active-indicator-color: var(--orange);
+  --mat-tab-header-inactive-label-text-color: var(--text-mid);
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
+  overflow-x: hidden;
+  background: var(--silver);
+  color: var(--text);
+}
+app-root { display: block; height: 100%; }
+
+/* Scrollbar theming */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--silver-dk); }
+::-webkit-scrollbar-thumb { background: var(--graphite-lt); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--graphite); }

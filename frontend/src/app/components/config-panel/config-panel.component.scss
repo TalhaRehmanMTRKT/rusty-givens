@@ -1,0 +1,88 @@
+.full-width {
+  width: 100%;
+}
+
+mat-card {
+  background: var(--white);
+  border: 1px solid var(--silver-dk);
+  border-top: 3px solid var(--blue);
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 59, 92, 0.08) !important;
+}
+
+mat-card-header {
+  border-bottom: 1px solid var(--silver-dk);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+
+:host ::ng-deep {
+  .mat-mdc-card-title {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: var(--blue) !important;
+  }
+
+  .mat-mdc-card-subtitle {
+    font-size: 0.75rem !important;
+    color: var(--text-mid) !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 12px;
+  }
+
+  mat-card-actions {
+    padding: 0 16px 16px;
+  }
+
+  .mdc-text-field--outlined .mdc-notched-outline .mdc-notched-outline__leading,
+  .mdc-text-field--outlined .mdc-notched-outline .mdc-notched-outline__trailing,
+  .mdc-text-field--outlined .mdc-notched-outline .mdc-notched-outline__notch {
+    border-color: var(--silver-dkr) !important;
+  }
+
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+    .mdc-notched-outline .mdc-notched-outline__leading,
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+    .mdc-notched-outline .mdc-notched-outline__trailing,
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled):hover
+    .mdc-notched-outline .mdc-notched-outline__notch {
+    border-color: var(--blue) !important;
+  }
+
+  .mat-mdc-raised-button.mat-primary,
+  .mat-mdc-raised-button[color='primary'] {
+    background-color: var(--blue) !important;
+    color: var(--silver) !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 8px rgba(0, 59, 92, 0.25) !important;
+
+    &:hover:not([disabled]) {
+      background-color: var(--blue-dark) !important;
+    }
+
+    &[disabled] {
+      background-color: var(--silver-dk) !important;
+      color: var(--text-light) !important;
+    }
+  }
+
+  .mat-mdc-progress-bar .mdc-linear-progress__bar-inner {
+    border-color: var(--orange) !important;
+  }
+  .mat-mdc-progress-bar .mdc-linear-progress__buffer-bar {
+    background-color: var(--blue-light) !important;
+  }
+}

@@ -1,0 +1,178 @@
+@if (result) {
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Results Summary</mat-card-title>
+      <mat-card-subtitle>{{ result.factorization }} — {{ result.converged ? 'Converged' : 'NOT converged' }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="metrics-grid">
+        <div class="metric">
+          <span class="label">Status</span>
+          <mat-chip [highlighted]="result.converged"
+                    [color]="result.converged ? 'primary' : 'warn'">
+            <mat-icon>{{ result.converged ? 'check_circle' : 'error' }}</mat-icon>
+            {{ result.converged ? 'Converged' : 'Failed' }}
+          </mat-chip>
+        </div>
+
+        <div class="metric">
+          <span class="label">SE Time</span>
+          <span class="value">{{ result.se_time_seconds | number:'1.3-3' }} s</span>
+        </div>
+
+        <div class="metric">
+          <span class="label">Iterations</span>
+          <span class="value">{{ result.iterations }}</span>
+        </div>
+
+        <div class="metric">
+          <span class="label">Final |Δx|</span>
+          <span class="value">{{ result.final_increment.toExponential(2) }}</span>
+        </div>
+
+        <div class="metric">
+          <span class="label">VM MAE</span>
+          <span class="value">{{ result.vm_mae.toExponential(3) }} p.u.</span>
+        </div>
+
+        <div class="metric">
+          <span class="label">VM Max Error</span>
+          <span class="value">{{ result.vm_max_error.toExponential(3) }} p.u.</span>
+        </div>
+
+        <div class="metric">
+          <span class="label">VA MAE</span>
+          <span class="value">{{ result.va_mae_deg.toExponential(3) }}°</span>
+        </div>
+
+        <div class="metric">
+          <span class="label">VA Max Error</span>
+          <span class="value">{{ result.va_max_error_deg.toExponential(3) }}°</span>
+        </div>
+      </div>
+
+      <!-- Global status section -->
+      @if (result.global_status; as gs) {
+        <h3 class="section-title">Global Status</h3>
+        <div class="metrics-grid">
+          <div class="metric">
+            <span class="label">Buses</span>
+            <span class="value">{{ gs.n_buses }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Branches</span>
+            <span class="value">{{ gs.n_branches }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">State Variables</span>
+            <span class="value">{{ gs.n_state_variables }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Measurements</span>
+            <span class="value">{{ gs.measurement_counts.total }}</span>
+          </div>
+        </div>
+
+        @if (gs.objective) {
+          <h4 class="subsection-title">Objective Function (Chi²)</h4>
+          <div class="metrics-grid">
+            <div class="metric">
+              <span class="label">J(x̂)</span>
+              <span class="value">{{ gs.objective.objective_value | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">E[J] (dof)</span>
+              <span class="value">{{ gs.objective.expected_value | number:'1.0-0' }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">J / dof</span>
+              <span class="value" [class.warn-value]="gs.objective.objective_value / gs.objective.expected_value > 3">
+                {{ (gs.objective.objective_value / gs.objective.expected_value) | number:'1.3-3' }}
+              </span>
+            </div>
+          </div>
+        }
+
+        <!-- Measurement breakdown -->
+        <h4 class="subsection-title">Measurement Breakdown</h4>
+        <div class="meas-breakdown">
+          <div class="meas-row">
+            <span class="meas-type">Voltmeters</span>
+            <span class="meas-count">{{ gs.measurement_counts.voltmeters }}</span>
+          </div>
+          <div class="meas-row">
+            <span class="meas-type">Ammeters</span>
+            <span class="meas-count">{{ gs.measurement_counts.ammeters }}</span>
+          </div>
+          <div class="meas-row">
+            <span class="meas-type">Wattmeters</span>
+            <span class="meas-count">{{ gs.measurement_counts.wattmeters }}</span>
+          </div>
+          <div class="meas-row">
+            <span class="meas-type">Varmeters</span>
+            <span class="meas-count">{{ gs.measurement_counts.varmeters }}</span>
+          </div>
+          <div class="meas-row">
+            <span class="meas-type">PMU pairs</span>
+            <span class="meas-count">{{ gs.measurement_counts.pmu_pairs }}</span>
+          </div>
+        </div>
+
+        <!-- Power balance -->
+        <h4 class="subsection-title">Power Balance</h4>
+        <div class="metrics-grid">
+          <div class="metric">
+            <span class="label">P Generation</span>
+            <span class="value">{{ gs.power_balance.total_p_generation | number:'1.4-4' }} p.u.</span>
+          </div>
+          <div class="metric">
+            <span class="label">P Load</span>
+            <span class="value">{{ gs.power_balance.total_p_load | number:'1.4-4' }} p.u.</span>
+          </div>
+          <div class="metric">
+            <span class="label">P Losses</span>
+            <span class="value">{{ gs.power_balance.total_p_loss | number:'1.4-4' }} p.u.</span>
+          </div>
+          <div class="metric">
+            <span class="label">Q Generation</span>
+            <span class="value">{{ gs.power_balance.total_q_generation | number:'1.4-4' }} p.u.</span>
+          </div>
+          <div class="metric">
+            <span class="label">Q Load</span>
+            <span class="value">{{ gs.power_balance.total_q_load | number:'1.4-4' }} p.u.</span>
+          </div>
+          <div class="metric">
+            <span class="label">Q Losses</span>
+            <span class="value">{{ gs.power_balance.total_q_loss | number:'1.4-4' }} p.u.</span>
+          </div>
+        </div>
+
+        <!-- Voltage level breakdown -->
+        @if (gs.per_voltage_level.length > 0) {
+          <h4 class="subsection-title">Per Voltage Level</h4>
+          <table class="vl-table">
+            <thead>
+              <tr>
+                <th>kV</th>
+                <th>Buses</th>
+                <th>Branches</th>
+                <th>Meas</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (vl of gs.per_voltage_level; track vl.voltage_kv) {
+                <tr>
+                  <td>{{ vl.voltage_kv | number:'1.1-1' }}</td>
+                  <td>{{ vl.n_buses }}</td>
+                  <td>{{ vl.n_branches }}</td>
+                  <td>{{ vl.measurement_counts.total }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+}
