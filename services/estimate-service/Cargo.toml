@@ -7,20 +7,11 @@ license = "Apache-2.0"
 
 [features]
 default = []
-#pro = [
-  #  "dep:rusty-givens-bdd",
- #   "dep:rusty-givens-obs",
- #   "dep:rusty-givens-red",
-#]
+pro = []
 
 [dependencies]
 rusty-givens-core = { path = "../../crates/rusty-givens-core" }
 rusty-givens-io = { path = "../../crates/rusty-givens-io" }
-
-# Pro-only dependencies — only compiled when `--features pro` is passed
-#rusty-givens-bdd = { path = "../../crates/pro/rusty-givens-bdd", optional = true }
-#rusty-givens-obs = { path = "../../crates/pro/rusty-givens-obs", optional = true }
-#rusty-givens-red = { path = "../../crates/pro/rusty-givens-red", optional = true }
 
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
